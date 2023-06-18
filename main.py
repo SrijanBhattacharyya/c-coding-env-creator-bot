@@ -76,7 +76,7 @@ def mod_cfg (data: dict):
 
     cfg = data ["settings.json"]
 
-    cfg ["App-Settings"]["project_name"] = os.path.split (env_path)[1]
+    cfg ["App-Settings"]["project-name"] = os.path.split (env_path)[1]
 
     return data
 
