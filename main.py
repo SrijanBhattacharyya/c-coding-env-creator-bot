@@ -1,4 +1,4 @@
-import os, sys, time, json, setup
+import os, sys, time, json, setup, stat
 
 setup.setup (os.path.abspath (__file__))
 
@@ -24,17 +24,17 @@ def get_env_path (flag_only: bool = False) -> (str|None):
                 return arg
 
 
-def check_flag (cmd: str, path: os.path) -> None:
+def check_flag (cmd: str) -> None:
     if cmd == '-t' or cmd == '-test':
         time.sleep (10)
-        os.system (f"rm -r '{path}'")
+        os.system (f"rm -r '{env_path}'")
         print (f"\033[1;31m[+] Removed '{get_env_path ()}' successfully.\033[0m")
 
     if cmd == '-h' or cmd == 'help':
         help ()
 
 
-def mk_code_env (env_path: os.path) -> None:
+def mk_code_env () -> None:
     if os.path.exists (env_path):
         print (f"\033[1;31m[-] PathAlreadyExistsError: Can't create venv '{env_path}': File already exists.\033[0m")
         exit ()
@@ -42,7 +42,7 @@ def mk_code_env (env_path: os.path) -> None:
     else: os.makedirs (env_path)
 
 
-def check_if_created (env_path: os.path) -> bool:
+def check_if_created () -> bool:
     return os.path.exists (env_path)
 
 
@@ -67,7 +67,7 @@ def get_default_code  (mainDir: os.path) -> dict:
     return data
 
 
-def mod_cfg (data: dict, env_path: os.path):
+def mod_cfg (data: dict):
     # modifying the code-workspace file for the new venv
     cfg = data [".vscode/code-workspace.json"]
 
@@ -76,17 +76,19 @@ def mod_cfg (data: dict, env_path: os.path):
 
     cfg = data ["settings.json"]
 
-    cfg ["App-Settings"]["name"] = os.path.split (env_path)[1]
+    cfg ["App-Settings"]["project_name"] = os.path.split (env_path)[1]
 
     return data
 
 
-def config_code_env (data: dict, env_path: os.path) -> None:
+def config_code_env (data: dict) -> None:
     cmd = f"gcc -o output program.c"
+
     os.chdir (env_path)
 
     for file_path in data.keys ():
         file = file_path
+
         try:
             os.makedirs (os.path.dirname (file_path))
             file = os.path.join (os.path.dirname (file_path), f"{os.path.split (env_path)[1]}.code-workspace")
@@ -100,6 +102,9 @@ def config_code_env (data: dict, env_path: os.path) -> None:
 
             else:
                 f.writelines (data [file_path])
+
+        if '.sh' in file_path:
+            os.chmod('compiler.sh', stat.S_IXUSR | stat.S_IRUSR | stat.S_IWUSR)
 
     os.system (cmd)
 
@@ -118,18 +123,19 @@ Made by Srijan Bhattacharyya.'''
 
 
 def main ():
-    path = get_env_path ()
-    data = mod_cfg (get_default_code (mainDir), path)
+    global env_path, data
+    env_path = get_env_path ()
+    data = mod_cfg (get_default_code (mainDir))
 
-    mk_code_env (path)
+    mk_code_env ()
 
-    if check_if_created (path):
-        config_code_env (data, path)
+    if check_if_created ():
+        config_code_env (data)
 
     print (f'\033[1;32m[+] Venv created successfully.\033[0m')
-    print (f"\033[1mPath to venv: {path}\033[0m")
+    print (f"\033[1;33mPath to venv: {env_path}\033[0m")
 
-    check_flag (get_env_path (True), path)
+    check_flag (get_env_path (True))
 
 
 if __name__ == "__main__":
