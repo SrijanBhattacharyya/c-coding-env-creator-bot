@@ -64,6 +64,8 @@ def get_default_code  (mainDir: os.path) -> dict:
             else:
                 data [elem] = data_file.readlines ()
 
+    os.chdir (mainDir)
+
     return data
 
 
@@ -107,6 +109,7 @@ def config_code_env (data: dict) -> None:
             os.chmod('compiler.sh', stat.S_IXUSR | stat.S_IRUSR | stat.S_IWUSR)
 
     os.system (cmd)
+    os.chdir (mainDir)
 
 
 def help ():
